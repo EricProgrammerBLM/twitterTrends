@@ -33,12 +33,10 @@ auth = tweepy.OAuthHandler(consumer_key=API_Key, consumer_secret=API_Key_Secret)
 auth.set_access_token(Access_Token, Access_Token_Secret)
 api=tweepy.API(auth)
 
-print ('Starting')
-
 def GrabAPI_Trends(trends):
         # Call the Sheets API
         result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                    range='Google_Sheets_Name_Goes_Here!E2:E100').execute()
+                                    range='twitterData!E2:E100').execute()
         values = result.get('values', []) #Pulls the list into a list of list
         return (values)
 
@@ -63,13 +61,13 @@ print ('Starting at ', time)
 
 #Need this so the bot will know when to reset certain data at 12 at night
 request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID, 
-			range = 'Google_Sheets_Name_Goes_Here!F'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
+			range = 'twitterData!F'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
 request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID, 
-			range = 'Google_Sheets_Name_Goes_Here!F3', valueInputOption='USER_ENTERED', body={'values': [[str(time)]]}).execute()
+			range = 'twitterData!F3', valueInputOption='USER_ENTERED', body={'values': [[str(time)]]}).execute()
 
 def Yesterday(): #Might delete later
 	result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                    range='Google_Sheets_Name_Goes_Here!F2:F2').execute()
+                                    range='twitterData!F2:F2').execute()
 	result = [item for items in (result.get('values')) for item in items]
 	return (str(result[0]))
 
@@ -88,7 +86,7 @@ def SubString(string, list):
 			return True
 
 def ClearColumn(columnLetter): #Used to clear data every day so we can get fresh notifications
-	request = service.spreadsheets().values().clear(spreadsheetId=SAMPLE_SPREADSHEET_ID, range='Google_Sheets_Name_Goes_Here!' + columnLetter +'2:' + columnLetter + '400').execute()
+	request = service.spreadsheets().values().clear(spreadsheetId=SAMPLE_SPREADSHEET_ID, range='twitterData!' + columnLetter +'2:' + columnLetter + '400').execute()
 
 while True:
 	Trend_Result = api.get_place_trends(US_WOEID) #Pulls the Top 50 Trends. 
@@ -107,13 +105,13 @@ while True:
 			if trend['name'].lower() in MyTrends or SubString(trend['name'].lower(), MyTrends): #Checks our personal list and see if any of the strings match up with whats trending, and if its what we're interested in.. Even if its a portion of the word
 				TrendsWeKnow.append(trend['name'])
 				request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID,
-							 range = 'Google_Sheets_Name_Goes_Here!A'+ str(Row), valueInputOption='USER_ENTERED', body={'values': [[TrendNum]]}).execute()
+							 range = 'twitterData!A'+ str(Row), valueInputOption='USER_ENTERED', body={'values': [[TrendNum]]}).execute()
 				request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID,
-							 range = 'Google_Sheets_Name_Goes_Here!B'+ str(Row), valueInputOption='USER_ENTERED', body={'values': [[trend['name']]]}).execute()
+							 range = 'twitterData!B'+ str(Row), valueInputOption='USER_ENTERED', body={'values': [[trend['name']]]}).execute()
 				request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID, 
-						range = 'Google_Sheets_Name_Goes_Here!C'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
+						range = 'twitterData!C'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
 				request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID, 
-						range = 'Google_Sheets_Name_Goes_Here!D'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[trend['tweet_volume']]]}).execute()
+						range = 'twitterData!D'+str(Row), valueInputOption='USER_ENTERED', body={'values': [[trend['tweet_volume']]]}).execute()
 				Row += 1
 				TextMessage = trend['name'] + ' is Trending. Here is the Link: ' + trend['url']
 				SendText(TextMessage)
@@ -122,9 +120,10 @@ while True:
 	#else: 
 	#	print ('not time yet')
 
-	if Reset > 100: #Every 8 Hours it clears my list
+	if Reset > 200:
+		today = date.today()
 		request = sheet.values().update(spreadsheetId = SAMPLE_SPREADSHEET_ID, 
-			range = 'Google_Sheets_Name_Goes_Here!F2:F2', valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
+			range = 'twitterData!F2:F2', valueInputOption='USER_ENTERED', body={'values': [[str(today)]]}).execute()
 		Row = 2
 		Reset = 0 #Not used yet
 		ClearColumn('A')
